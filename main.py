@@ -2,6 +2,8 @@ import json
 import pandas as pd
 import requests
 import time
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 with open('data.json', "r") as f:
     data = json.loads(f.read())
@@ -56,17 +58,41 @@ def get_activities():
         for x in range(len(r)):
             activities.loc[x + (page-1)*200,'id'] = r[x]['id']
             activities.loc[x + (page-1)*200,'name'] = r[x]['name']
-            activities.loc[x + (page-1)*200,'start_date_local'] = r[x]['start_date_local']
+            activities.loc[x + (page-1)*200,'start_date_local'] = r[x]['start_date_local'].split('T')[0]
             activities.loc[x + (page-1)*200,'type'] = r[x]['type']
             activities.loc[x + (page-1)*200,'distance'] = r[x]['distance']
             activities.loc[x + (page-1)*200,'moving_time'] = r[x]['moving_time']
             activities.loc[x + (page-1)*200,'elapsed_time'] = r[x]['elapsed_time']
             activities.loc[x + (page-1)*200,'average_speed'] = r[x]['average_speed']
             activities.loc[x + (page-1)*200,'max_speed'] = r[x]['max_speed']
-          
+            
         page += 1
 
     activities.to_csv('strava_activities.csv')
+    activities = activities[(activities['type'] == 'Run') & (activities['distance'] > 4900)]
+    activities = activities.reset_index()
+    activities['moving_time'] = activities["moving_time"]/60
+    activities['moving_time'] = activities['moving_time'].apply(lambda x:round(x,2))
+    activities = activities.round(2)
+
+    fig = plt.figure(figsize=(20, 10))
+    fig.subplots_adjust(hspace=0.5)
+    gs = GridSpec(nrows=1, ncols=1)
+    fig.suptitle(f'Recent Runs', fontsize=16)
+
+    ax0 = fig.add_subplot(gs[0, 0])
+    bars = ax0.bar(activities["start_date_local"], activities["moving_time"])
+    ax0.bar_label(bars)
+    ax0.set_title('5k+ Runs')
+    ax0.set_xlabel('Date')
+    ax0.set_ylabel('Time in Minutes')
+    
+    plt.xticks(rotation=90)
+    fig.savefig(f'all_runs.png')
+    plt.show()
+
+    # Make chart showoing best races by pace
+    # Fix x label and date
 
 
 get_activities()
