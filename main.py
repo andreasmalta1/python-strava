@@ -29,7 +29,18 @@ def get_activities():
         strava_tokens = json.load(json_file)
         
     if strava_tokens['expires_at'] < time.time():
-        strava_tokens = get_strava_tokens()
+        response = requests.post(
+                        url = 'https://www.strava.com/oauth/token',
+                        data = {'client_id': data['client_id'],
+                                'client_secret': data['client_secret'],
+                                'grant_type': 'refresh_token',
+                                'refresh_token': strava_tokens['refresh_token']
+                                })
+        
+        new_strava_tokens = response.json()
+        with open('strava_tokens.json', 'w') as outfile:
+            json.dump(new_strava_tokens, outfile)
+        strava_tokens = new_strava_tokens
         
     page = 1
     url = "https://www.strava.com/api/v3/activities"
@@ -81,8 +92,9 @@ def get_activities():
     fig.suptitle(f'Recent Runs', fontsize=16)
 
     ax0 = fig.add_subplot(gs[0, 0])
-    bars = ax0.bar(activities["start_date_local"], activities["moving_time"])
-    ax0.bar_label(bars)
+    # bars = ax0.bar(activities["start_date_local"], activities["moving_time"])
+    ax0.plot(activities["start_date_local"], activities["moving_time"])
+    # ax0.bar_label(bars)
     ax0.set_title('5k+ Runs')
     ax0.set_xlabel('Date')
     ax0.set_ylabel('Time in Minutes')
