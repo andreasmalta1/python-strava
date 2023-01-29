@@ -5,7 +5,7 @@ import time
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 
-with open("data.json", "r") as f:
+with open("credentials/data.json", "r") as f:
     data = json.loads(f.read())
 
 
@@ -22,13 +22,13 @@ def get_strava_tokens():
 
     strava_tokens = response.json()
 
-    with open("strava_tokens.json", "w") as outfile:
+    with open("credentials/strava_tokens.json", "w") as outfile:
         json.dump(strava_tokens, outfile)
     return strava_tokens
 
 
 def get_activities():
-    with open("strava_tokens.json") as json_file:
+    with open("credentials/strava_tokens.json") as json_file:
         strava_tokens = json.load(json_file)
 
     if strava_tokens["expires_at"] < time.time():
@@ -43,7 +43,7 @@ def get_activities():
         )
 
         new_strava_tokens = response.json()
-        with open("strava_tokens.json", "w") as outfile:
+        with open("credentials/strava_tokens.json", "w") as outfile:
             json.dump(new_strava_tokens, outfile)
         strava_tokens = new_strava_tokens
 
@@ -105,26 +105,50 @@ def get_activities():
     activities["moving_time"] = activities["moving_time"] / 60
     activities["moving_time"] = activities["moving_time"].apply(lambda x: round(x, 2))
     activities = activities.round(2)
+    return activities
 
+
+def set_figure(title):
     fig = plt.figure(figsize=(20, 10))
     fig.subplots_adjust(hspace=0.5)
     gs = GridSpec(nrows=1, ncols=1)
-    fig.suptitle(f"Recent Runs", fontsize=16)
+    fig.suptitle(f"{title} Runs", fontsize=16)
+    return fig, gs
 
+
+def plot_figure(fig, gs, activities):
     ax0 = fig.add_subplot(gs[0, 0])
-    # bars = ax0.bar(activities["start_date_local"], activities["moving_time"])
     ax0.plot(activities["start_date_local"], activities["moving_time"])
-    # ax0.bar_label(bars)
     ax0.set_title("5k+ Runs")
     ax0.set_xlabel("Date")
     ax0.set_ylabel("Time in Minutes")
 
+
+def save_fig(fig, title):
     plt.xticks(rotation=90)
-    fig.savefig(f"all_runs.png")
+    fig.savefig(f"images/{title.lower()}_runs.png")
     plt.show()
 
-    # Make chart showoing best races by pace
-    # Fix x label and date
+
+def recent_runs(activities):
+    title = "Recent"
+    fig, gs = set_figure(title)
+    plot_figure(fig, gs, activities)
+    save_fig(fig, title)
 
 
-get_activities()
+def best_runs(activities):
+    title = "Best"
+    fig, gs = set_figure(title)
+    activities = activities.sort_values("moving_time")
+    plot_figure(fig, gs, activities)
+    save_fig(fig, title)
+
+
+def main():
+    activities = get_activities()
+    recent_runs(activities)
+    best_runs(activities)
+
+
+main()
