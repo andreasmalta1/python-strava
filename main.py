@@ -4,6 +4,7 @@ import requests
 import time
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+from colour import Color
 
 with open("credentials/data.json", "r") as f:
     data = json.loads(f.read())
@@ -103,7 +104,7 @@ def get_activities():
     ]
     activities = activities.reset_index()
     activities["moving_time"] = activities["moving_time"] / 60
-    activities["moving_time"] = activities["moving_time"].apply(lambda x: round(x, 2))
+    activities["moving_time"] = activities["moving_time"].apply(lambda x: round(x, 1))
     activities = activities.round(2)
     return activities
 
@@ -116,12 +117,40 @@ def set_figure(title):
     return fig, gs
 
 
-def plot_figure(fig, gs, activities):
-    ax0 = fig.add_subplot(gs[0, 0])
-    ax0.plot(activities["start_date_local"], activities["moving_time"])
-    ax0.set_title("5k+ Runs")
-    ax0.set_xlabel("Date")
-    ax0.set_ylabel("Time in Minutes")
+def plot_figure_line(fig, gs, activities):
+    ax = fig.add_subplot(gs[0, 0])
+    ax.plot(activities["start_date_local"], activities["moving_time"])
+    ax.set_title("5k+ Runs")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Time in Minutes")
+
+
+def plot_figure_bar(fig, gs, activities):
+    red = Color("green")
+    colors = list(red.range_to(Color("red"), len(activities["moving_time"])))
+    colors = [color.rgb for color in colors]
+
+    ax = fig.add_subplot(gs[0, 0])
+    ax.bar(
+        activities["start_date_local"],
+        activities["moving_time"],
+        color=colors,
+        align="edge",
+        width=0.3,
+    )
+    ax.set_title("5k+ Runs")
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Time in Minutes")
+
+    for index, value in enumerate(activities["moving_time"]):
+        ax.text(
+            index - 0.3,
+            value + 0.2,
+            str(value),
+            size=8,
+            color="blue",
+            fontweight="bold",
+        )
 
 
 def save_fig(fig, title):
@@ -133,7 +162,7 @@ def save_fig(fig, title):
 def recent_runs(activities):
     title = "Recent"
     fig, gs = set_figure(title)
-    plot_figure(fig, gs, activities)
+    plot_figure_line(fig, gs, activities)
     save_fig(fig, title)
 
 
@@ -141,7 +170,7 @@ def best_runs(activities):
     title = "Best"
     fig, gs = set_figure(title)
     activities = activities.sort_values("moving_time")
-    plot_figure(fig, gs, activities)
+    plot_figure_bar(fig, gs, activities)
     save_fig(fig, title)
 
 
