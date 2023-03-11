@@ -145,7 +145,7 @@ def plot_figure_bar(fig, gs, activities):
     for index, value in enumerate(activities["moving_time"]):
         ax.text(
             index - 0.3,
-            value + 0.2,
+            value + 0.1,
             str(value),
             size=8,
             color="blue",
@@ -156,7 +156,6 @@ def plot_figure_bar(fig, gs, activities):
 def save_fig(fig, title):
     plt.xticks(rotation=90)
     fig.savefig(f"images/{title.lower()}_runs.png")
-    plt.show()
 
 
 def recent_runs(activities):
