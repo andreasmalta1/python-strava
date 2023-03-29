@@ -98,7 +98,7 @@ def get_activities():
 
         page += 1
 
-    activities.to_csv("strava_activities.csv")
+    activities.to_csv("csv/strava_activities.csv")
     activities = activities[
         (activities["type"] == "Run") & (activities["distance"] > 4900)
     ]
